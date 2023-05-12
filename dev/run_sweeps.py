@@ -121,7 +121,7 @@ def boring_tweet(tweet):
 
 def make_dataset(dataset, epochs):
     total_text = '<|endoftext|>'
-    tweets = [t for t in dataset]
+    tweets = list(dataset)
     for _ in range(epochs):
         random.shuffle(tweets)
         total_text += '<|endoftext|>'.join(tweets) + '<|endoftext|>'
@@ -142,13 +142,13 @@ def main(config):
     train_dataset, valid_dataset = torch.utils.data.random_split(cool_tweets, [train_size, valid_size])
 
     # make data files
-    with open('data_{}_train.txt'.format(config.handle), 'w') as f:
+    with open(f'data_{config.handle}_train.txt', 'w') as f:
         data = make_dataset(train_dataset, config.epochs)
         f.write(data)
-    with open('data_{}_valid.txt'.format(config.handle), 'w') as f:
+    with open(f'data_{config.handle}_valid.txt', 'w') as f:
         data = make_dataset(valid_dataset, 1)
         f.write(data)
-    
+
     # Set up training parameters
     tokenizer = AutoTokenizer.from_pretrained('gpt2')
     model = AutoModelForCausalLM.from_pretrained('gpt2')
@@ -179,7 +179,7 @@ def main(config):
         train_dataset=train_dataset,
         eval_dataset=valid_dataset,
         prediction_loss_only=True)
-    
+
     # Update lr scheduler
     train_dataloader = trainer.get_train_dataloader()
     num_train_steps = int(len(train_dataloader) // config.gradient_accumulation_steps)
@@ -199,7 +199,7 @@ def main(config):
             num_warmup_steps=int(config.percent_warmup_steps * num_train_steps),
             num_training_steps=num_train_steps)
     trainer.optimizers = (optimizer, scheduler)
-    
+
     # Train & evaluate
     trainer.train()
     trainer.evaluate()
